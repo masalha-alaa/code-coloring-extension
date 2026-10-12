@@ -34,7 +34,7 @@ try {
   };
   const cpp = '#include "imu_runner.h"\n\nstatic IMU *imu = nullptr; // global instance\n\nextern "C" bool IMU_RUNNER_IMU_init(bool chip_select_support) {\n  if (!imu) {\n    imu = createIMU(chip_select_support);\n  }\n  return imu->IMU_Init();\n}\n';
   const cppPath = await file('imu runner.cpp', cpp);
-  await page.locator('.hljs-comment').waitFor();
+  await page.locator('.hljs-comment').first().waitFor();
   assert.equal(await page.getByRole('combobox', { name: 'Language' }).inputValue(), 'auto');
   assert.match(await page.locator('.status').textContent(), /C\+\+/);
   assert.equal(await page.locator('input[aria-label="Pretty JSON"]').count(), 1);
@@ -52,7 +52,7 @@ try {
   const originalSize = await fontSize();
   await page.getByRole('button', { name: 'Larger text', exact: true }).click();
   assert.equal(await fontSize(), originalSize + 1);
-  await page.locator('.hljs-comment').waitFor();
+  await page.locator('.hljs-comment').first().waitFor();
   assert.equal(await page.locator('.hljs-comment').first().evaluate(node => parseFloat(getComputedStyle(node).fontSize)), originalSize + 1);
   await page.getByRole('button', { name: 'Smaller text', exact: true }).click();
   assert.equal(await fontSize(), originalSize);
@@ -91,7 +91,7 @@ try {
   // A long logical line wraps, and the next line starts after its entire height.
   const wrappedSource = '/* ' + 'wrapped comment '.repeat(20) + '\ncontinued comment */\n\nint value = 42;\n';
   await file('wrapped.cpp', wrappedSource);
-  await page.locator('.hljs-comment').waitFor();
+  await page.locator('.hljs-comment').first().waitFor();
   const rowInfo = await page.locator('.code-line').evaluateAll(rows => rows.map(row => ({
     number: row.dataset.line, top: row.getBoundingClientRect().top,
     bottom: row.getBoundingClientRect().bottom, height: row.getBoundingClientRect().height,

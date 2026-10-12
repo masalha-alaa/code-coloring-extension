@@ -42,7 +42,7 @@ Common extensions are mapped automatically, including `.h` → C, `.hpp` → C++
 
 No network requests, analytics, remote scripts, or uploads. Highlight.js is bundled locally. File contents are used only in the current tab and are never stored. Local extension storage contains viewing preferences and a SHA-256 hash of each file URL for its saved settings.
 
-`storage` remembers settings; `activeTab` lets the popup communicate with the tab you open it from. The content script matches only `file:///*`, with file access separately controlled by Chrome. The extension has no filesystem write capability.
+`storage` remembers settings. The popup communicates directly with the viewer in the active tab without requesting browsing history or tab URL access. The content script matches only `file:///*`, with file access separately controlled by Chrome. The extension has no filesystem write capability.
 
 ## Development
 

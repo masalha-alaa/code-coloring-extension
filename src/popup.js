@@ -36,10 +36,10 @@ async function initialize() {
     $('notice').textContent = 'Enable “Allow access to file URLs” in the extension’s details, then reload your local file tab.';
     $('settings').hidden = false; return;
   }
-  if (!tab?.url?.startsWith('file:')) { $('notice').textContent = 'Open a local source file in Chrome to color it automatically.'; return; }
+  if (!tab?.id) { $('notice').textContent = 'Open a local source file in Chrome to color it automatically.'; return; }
   try { display(await chrome.tabs.sendMessage(tab.id, { type: 'getState' })); }
   catch {
-    $('notice').textContent = 'No text viewer is active. Try reloading this tab. Chrome must display the file as plain text; rendered pages and downloaded files cannot be colored here.';
+    $('notice').textContent = 'Open a local source file in Chrome, or reload this tab if one is already open. Chrome must display it as plain text; rendered pages and downloaded files cannot be colored here.';
     $('reload').hidden = false;
   }
 }

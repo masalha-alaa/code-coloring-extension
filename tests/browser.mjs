@@ -96,11 +96,18 @@ try {
 
   // Test popup against a real active file tab and the actual content-script API.
   await file('popup.json', '{"ok":true}');
-  const popup = await context.newPage();
-  await popup.goto(`chrome-extension://${extension.id}/popup.html`);
   await page.bringToFront();
-  await popup.reload();
-  await popup.locator('#controls:not([hidden])').waitFor();
+  // Keep the source tab active, as it is when Chrome opens an action popup.
+  const cdp = await context.newCDPSession(page);
+  const popupCreated = context.waitForEvent('page');
+  await cdp.send('Target.createTarget', { url: `chrome-extension://${extension.id}/popup.html`, background: true });
+  const popup = await popupCreated;
+  try { await popup.locator('#controls:not([hidden])').waitFor({ timeout: 10000 }); }
+  catch (error) {
+    console.log('Popup notice:', await popup.locator('#notice').textContent());
+    console.log('Active tab:', await popup.evaluate(() => chrome.tabs.query({ active: true, currentWindow: true })));
+    throw error;
+  }
   assert.equal(await popup.locator('#filename').textContent(), 'popup.json');
   await popup.locator('#pretty').check();
   await page.waitForFunction(() => document.querySelector('#code-coloring-viewer').shadowRoot.querySelector('code').textContent.includes('\n'));

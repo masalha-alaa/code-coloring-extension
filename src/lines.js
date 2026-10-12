@@ -20,6 +20,9 @@ export function renderLines(code, source, highlighted) {
       const parts = node.textContent.split('\n');
       for (let index = 0; index < parts.length; index++) {
         if (index) {
+          // Give empty interior lines a real line break for native selection.
+          // Leave the final empty line empty so a trailing newline stays single.
+          if (!line.hasChildNodes()) line.append(document.createElement('br'));
           fragment.append(document.createTextNode('\n'));
           line = nextLine();
         }

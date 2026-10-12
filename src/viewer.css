@@ -25,7 +25,7 @@ code { display:block; font:inherit; color:#d3dce5; white-space:normal; }
 .code-line { display:block; position:relative; min-height:1.65em; white-space:pre; }
 .wrap .code-line { white-space:pre-wrap; overflow-wrap:anywhere; }
 .numbered .code-line { padding-left:calc(var(--gutter-width) + 12px); }
-.numbered .code-line::before { content:attr(data-line); position:absolute; top:0; left:0; width:var(--gutter-width); height:100%; padding-right:16px; border-right:1px solid #2a3545; text-align:right; color:#66778f; white-space:nowrap; user-select:none; }
+.numbered .code-line::before { content:attr(data-line); position:absolute; top:0; left:0; box-sizing:border-box; width:var(--gutter-width); height:100%; padding-right:16px; border-right:1px solid #2a3545; text-align:right; color:#66778f; white-space:nowrap; user-select:none; }
 code.unlined { white-space:pre; }
 .wrap code.unlined { white-space:pre-wrap; overflow-wrap:anywhere; }
 ::selection { background:#334e74; }

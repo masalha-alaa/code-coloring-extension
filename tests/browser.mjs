@@ -37,7 +37,7 @@ try {
   await page.locator('.hljs-comment').waitFor();
   assert.equal(await page.getByRole('combobox', { name: 'Language' }).inputValue(), 'auto');
   assert.match(await page.locator('.status').textContent(), /C\+\+/);
-  assert.equal(await page.getByRole('checkbox', { name: 'Pretty JSON' }).count(), 1);
+  assert.equal(await page.locator('input[aria-label="Pretty JSON"]').count(), 1);
   assert.equal(await page.getByRole('checkbox', { name: 'Pretty JSON' }).isVisible(), false);
   await page.screenshot({ path: 'test-results/cpp-viewer.png', fullPage: true });
   await page.getByRole('combobox').selectOption('python');

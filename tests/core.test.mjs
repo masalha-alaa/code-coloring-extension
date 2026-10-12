@@ -47,6 +47,9 @@ test('only native raw text PRE wrappers are eligible', () => {
   const pre = { tagName: 'PRE', children: [] };
   assert.equal(rawSourceElement({ body: { children: [pre] }, contentType: 'text/plain' }), pre);
   assert.equal(rawSourceElement({ body: { children: [pre] }, contentType: 'application/json' }), pre);
+  const jsonControl = { tagName: 'DIV', classList: { contains: name => name === 'json-formatter-container' } };
+  assert.equal(rawSourceElement({ body: { children: [pre, jsonControl] }, contentType: 'application/json' }), pre);
+  assert.equal(rawSourceElement({ body: { children: [pre, jsonControl] }, contentType: 'text/plain' }), null);
   assert.equal(rawSourceElement({ body: { children: [pre] }, contentType: 'text/html' }), null);
   assert.equal(rawSourceElement({ body: { children: [pre, {}] }, contentType: 'text/plain' }), null);
   assert.equal(rawSourceElement({ body: { children: [{ tagName: 'PRE', children: [{}] }] }, contentType: 'text/plain' }), null);

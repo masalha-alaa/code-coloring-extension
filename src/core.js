@@ -89,11 +89,14 @@ export function rawSourceElement(document) {
   // listings, XML trees, PDFs, and media untouched, even if they contain a PRE.
   const body = document.body;
   if (!body) return null;
-  const elements = [...body.children];
+  const mime = (document.contentType || '').toLowerCase();
+  const jsonMime = mime === 'application/json' || mime === 'text/json' || mime.endsWith('+json');
+  const elements = [...body.children].filter(node => !(
+    jsonMime && node.tagName === 'DIV' && node.classList?.contains('json-formatter-container')
+  ));
   if (elements.length !== 1 || elements[0].tagName !== 'PRE') return null;
   const pre = elements[0];
   if (pre.children.length !== 0) return null;
-  const mime = (document.contentType || '').toLowerCase();
   if (['text/html', 'application/xhtml+xml', 'image/svg+xml', 'text/xml', 'application/xml'].includes(mime)) return null;
   return pre;
 }

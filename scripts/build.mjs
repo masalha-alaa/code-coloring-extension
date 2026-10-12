@@ -1,0 +1,10 @@
+import { build } from 'esbuild';
+import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+await mkdir('extension/vendor', { recursive: true });
+await build({ entryPoints: ['src/content.js', 'src/popup.js'], outdir: 'extension', bundle: true, minify: true, format: 'iife', target: 'chrome109', loader: { '.css': 'text' }, legalComments: 'none' });
+await cp('node_modules/highlight.js/LICENSE', 'extension/vendor/highlightjs-LICENSE');
+await writeFile('extension/THIRD_PARTY_NOTICES.txt', 'Highlight.js 11.12.0 — Copyright (c) 2006, Ivan Sagalaev.\nBSD 3-Clause license, see vendor/highlightjs-LICENSE.\nhttps://github.com/highlightjs/highlight.js\n');
+await rm('dist', { recursive: true, force: true });
+await cp('extension', 'dist', { recursive: true });
+const manifest = JSON.parse(await readFile('dist/manifest.json', 'utf8'));
+console.log(`Built ${manifest.name} ${manifest.version} in dist/ (ready to Load unpacked).`);

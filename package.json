@@ -1,0 +1,15 @@
+{
+  "name": "code-coloring-extension",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Offline syntax highlighting for local source files opened in Chrome",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test tests/core.test.mjs",
+    "test:browser": "node tests/browser.mjs",
+    "package": "npm run build && python3 scripts/package.py"
+  },
+  "dependencies": { "highlight.js": "11.12.0" },
+  "devDependencies": { "esbuild": "0.28.2", "playwright": "1.61.1" }
+}

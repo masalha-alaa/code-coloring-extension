@@ -1,0 +1,15 @@
+:root { color-scheme:dark; font:13px system-ui,sans-serif; color:#d3dce5; background:#121824; }
+body { width:310px; margin:0; padding:20px; }
+[hidden] { display:none !important; }
+header { display:flex; gap:12px; align-items:center; }
+.mark { color:#86b7ff; font:700 24px monospace; }
+h1 { margin:0; font-size:17px; } header p { color:#98a8bf; margin:4px 0 0; }
+#notice { line-height:1.5; color:#b1bfd1; padding:12px; background:#1c2738; border-radius:7px; }
+#filename { font-weight:600; overflow-wrap:anywhere; }
+label { display:block; margin:12px 0 6px; }
+select,button { width:100%; font:inherit; color:inherit; background:#222f43; border:1px solid #40526c; border-radius:6px; padding:8px; }
+button { margin-top:12px; cursor:pointer; } button:hover { background:#2c405f; }
+.check { display:flex; align-items:center; gap:7px; padding:4px 0; }
+input { accent-color:#86b7ff; }
+footer { color:#7f91aa; font-size:11px; margin-top:18px; }
+:focus-visible { outline:2px solid #86b7ff; outline-offset:2px; }

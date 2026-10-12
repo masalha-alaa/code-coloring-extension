@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Code Coloring",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Automatically highlight local source files. Choose a language or pretty-print JSON for viewing, entirely offline.",
   "minimum_chrome_version": "109",
   "permissions": ["storage"],

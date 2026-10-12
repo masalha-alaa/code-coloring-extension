@@ -1,6 +1,7 @@
 import hljs from './highlighter.js';
 import { LANGUAGES, detectLanguage, fileName, languageLabel, prettyJson, rawSourceElement, validLanguage } from './core.js';
 import viewerCss from './viewer.css';
+import { renderLines } from './lines.js';
 
 async function start() {
   if (location.protocol !== 'file:' || document.getElementById('code-coloring-viewer')) return;
@@ -55,10 +56,9 @@ async function start() {
   toolbar.append(identity, controls);
   const status = element('div', { class: 'status', role: 'status', 'aria-live': 'polite' });
   const pane = element('main', { class: 'pane', 'aria-label': 'Source code' });
-  const gutter = element('pre', { class: 'gutter', 'aria-hidden': 'true' });
   const pre = element('pre', { class: 'source' });
   const code = element('code', { class: 'hljs', translate: 'no' });
-  pre.append(code); pane.append(gutter, pre); shadow.append(toolbar, status, pane);
+  pre.append(code); pane.append(pre); shadow.append(toolbar, status, pane);
   document.documentElement.style.cssText += ';background:#10141c;color-scheme:dark;';
   document.body.style.cssText += ';margin:0;background:#10141c;';
   document.body.replaceChildren(host);
@@ -76,7 +76,9 @@ async function start() {
     pretty.input.checked = state.pretty && lang === 'json';
     wrap.input.checked = state.wrap; lines.input.checked = state.lineNumbers;
     smaller.disabled = state.fontSize <= 11; larger.disabled = state.fontSize >= 24;
-    pane.style.setProperty('--font-size', state.fontSize + 'px');
+    // Apply to the actual text elements rather than relying on an inherited
+    // custom property and Chrome's native PRE/CODE font defaults.
+    pre.style.fontSize = code.style.fontSize = state.fontSize + 'px';
     pre.classList.toggle('wrap', state.wrap);
     displayed = original;
     currentMessage = '';
@@ -85,10 +87,13 @@ async function start() {
       else try { displayed = prettyJson(original); }
       catch (error) { currentMessage = `${error instanceof SyntaxError ? 'Invalid JSON' : 'JSON formatting unavailable'}: ${error.message}. Showing the original text.`; }
     }
-    code.textContent = displayed;
     const lineCount = displayed.split('\n').length;
-    gutter.hidden = !state.lineNumbers || state.wrap || lineCount > 50000;
-    gutter.setAttribute('data-lines', gutter.hidden ? '' : Array.from({ length: lineCount }, (_, i) => i + 1).join('\n'));
+    const useLines = lineCount <= 50000;
+    pre.classList.toggle('numbered', state.lineNumbers && useLines);
+    pre.style.setProperty('--gutter-width', `${String(lineCount).length + 3}ch`);
+    code.classList.toggle('unlined', !useLines);
+    if (useLines) renderLines(code, displayed);
+    else code.textContent = displayed;
     status.textContent = currentMessage || `${languageLabel(lang)} · ${lineCount.toLocaleString()} lines · Viewing only`;
     status.classList.toggle('error', Boolean(currentMessage));
     if (displayed.length > MAX_HIGHLIGHT_LENGTH) {
@@ -102,7 +107,8 @@ async function start() {
       try {
         const highlighted = hljs.highlight(displayed, { language: lang, ignoreIllegals: true }).value;
         // highlight.js escapes source text; only its generated token markup enters the DOM.
-        code.innerHTML = highlighted;
+        if (useLines) renderLines(code, displayed, highlighted);
+        else code.innerHTML = highlighted;
       } catch {
         code.textContent = displayed;
         status.textContent = 'Highlighting failed. Showing the original text safely.';

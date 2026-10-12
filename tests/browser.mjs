@@ -47,6 +47,16 @@ try {
   assert.equal(await page.getByRole('combobox').inputValue(), 'auto');
   assert.equal(await readFile(cppPath, 'utf8'), cpp);
 
+  // Font controls must change computed code and token sizes, not just settings.
+  const fontSize = () => page.locator('.source code').evaluate(node => parseFloat(getComputedStyle(node).fontSize));
+  const originalSize = await fontSize();
+  await page.getByRole('button', { name: 'Larger text', exact: true }).click();
+  assert.equal(await fontSize(), originalSize + 1);
+  await page.locator('.hljs-comment').waitFor();
+  assert.equal(await page.locator('.hljs-comment').first().evaluate(node => parseFloat(getComputedStyle(node).fontSize)), originalSize + 1);
+  await page.getByRole('button', { name: 'Smaller text', exact: true }).click();
+  assert.equal(await fontSize(), originalSize);
+
   const json = '{"large":900719925474099312345,"items":[1,true,null],"escaped":"\\u0041","nested":{"ok":true}}';
   const jsonPath = await file('sample.json', json);
   await page.getByRole('checkbox', { name: 'Pretty JSON' }).check();
@@ -73,10 +83,43 @@ try {
   await page.getByRole('checkbox', { name: 'Pretty JSON' }).check();
   assert.ok((await page.locator('.source code').textContent()).includes('\n'));
   await page.getByRole('checkbox', { name: 'Wrap', exact: true }).check();
-  assert.equal(await page.locator('.gutter').isVisible(), false);
+  assert.equal(await page.locator('.source').evaluate(node => node.classList.contains('numbered')), true);
   await page.setViewportSize({ width: 420, height: 800 });
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
   await page.screenshot({ path: 'test-results/narrow-viewer.png', fullPage: true });
+
+  // A long logical line wraps, and the next line starts after its entire height.
+  const wrappedSource = '/* ' + 'wrapped comment '.repeat(20) + '\ncontinued comment */\n\nint value = 42;\n';
+  await file('wrapped.cpp', wrappedSource);
+  await page.locator('.hljs-comment').waitFor();
+  const rowInfo = await page.locator('.code-line').evaluateAll(rows => rows.map(row => ({
+    number: row.dataset.line, top: row.getBoundingClientRect().top,
+    bottom: row.getBoundingClientRect().bottom, height: row.getBoundingClientRect().height,
+    lineHeight: parseFloat(getComputedStyle(row).lineHeight),
+    gutter: getComputedStyle(row, '::before').content
+  })));
+  assert.deepEqual(rowInfo.map(row => row.number), ['1', '2', '3', '4', '5']);
+  assert.ok(rowInfo[0].height > rowInfo[0].lineHeight * 2);
+  assert.ok(Math.abs(rowInfo[1].top - rowInfo[0].bottom) < 1);
+  assert.equal(rowInfo[0].gutter, '"1"');
+  assert.equal(await page.locator('.source code').textContent(), wrappedSource);
+  const selected = await page.locator('.source code').evaluate(code => {
+    const range = document.createRange(); range.selectNodeContents(code);
+    const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(range);
+    const text = selection.toString(); selection.removeAllRanges(); return text;
+  });
+  assert.equal(selected, wrappedSource);
+  assert.equal(await page.locator('[data-line="2"] .hljs-comment').count(), 1);
+  await page.getByRole('checkbox', { name: 'Line numbers', exact: true }).uncheck();
+  assert.equal(await page.locator('.code-line').first().evaluate(row => getComputedStyle(row, '::before').content), 'none');
+  await page.getByRole('checkbox', { name: 'Line numbers', exact: true }).check();
+  await page.getByRole('button', { name: 'Larger text', exact: true }).click();
+  assert.equal(await fontSize(), originalSize + 1);
+  await page.reload(); await page.locator('#code-coloring-viewer').waitFor();
+  assert.equal(await fontSize(), originalSize + 1);
+  assert.equal(await page.getByRole('checkbox', { name: 'Wrap', exact: true }).isChecked(), true);
+  assert.equal(await page.locator('.code-line').first().evaluate(row => getComputedStyle(row, '::before').content), '"1"');
+  await page.screenshot({ path: 'test-results/wrapped-lines-viewer.png', fullPage: true });
 
   // Markup in source files must remain text, including when HTML is selected.
   await file('markup.txt', '<script>globalThis.sourceExecuted=true</script><img src=x onerror="alert(1)">');

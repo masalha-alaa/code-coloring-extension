@@ -22,7 +22,7 @@ The viewer automatically chooses the language from the filename. Use the **Langu
 
 For JSON files, **Pretty JSON** formats the view with two-space indentation. The option appears only when the effective language is JSON, either detected or selected manually. Turning it off restores the exact original text. Invalid JSON stays visible with an error message. Formatting preserves large integers, numeric notation, duplicate keys, property order, and string escapes.
 
-The toolbar also provides line numbers, line wrapping, font size, and copying the displayed text. Wrapping hides line numbers so wrapped visual rows are not mistaken for source lines. Wrap, font size, and line number preferences apply across files. The dark theme is the default.
+The toolbar also provides line numbers, line wrapping, font size, and copying the displayed text. Line numbers stay aligned with each source line when it wraps; continuation rows share that source line’s number. Wrap, font size, and line number preferences apply across files. The dark theme is the default.
 
 ## Languages
 
@@ -59,7 +59,7 @@ npm run package
 
 Edit `src/` for viewer/popup behavior and `extension/` for the manifest, popup HTML/CSS, and icons. `npm run build` regenerates the committed `extension/content.js`, `extension/popup.js`, and third-party notices, then creates `dist/`. Commit the regenerated bundles with source changes so the repository stays ready to load.
 
-`npm run package` creates `artifacts/code-coloring-extension-v1.0.0.zip` with `manifest.json` at the root. GitHub Actions runs core tests and real Chromium extension tests before uploading this package and viewer screenshots.
+`npm run package` creates `artifacts/code-coloring-extension-v1.0.1.zip` with `manifest.json` at the root. GitHub Actions runs core tests and real Chromium extension tests before uploading this package and viewer screenshots.
 
 ## License
 

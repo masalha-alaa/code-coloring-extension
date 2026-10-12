@@ -2,6 +2,7 @@ import hljs from './highlighter.js';
 import { LANGUAGES, detectLanguage, fileName, languageLabel, prettyJson, rawSourceElement, validLanguage } from './core.js';
 import viewerCss from './viewer.css';
 import { renderLines } from './lines.js';
+import { minimumFontSize } from './font-size.js';
 
 async function start() {
   if (location.protocol !== 'file:' || document.getElementById('code-coloring-viewer')) return;
@@ -62,11 +63,22 @@ async function start() {
   document.documentElement.style.cssText += ';background:#10141c;color-scheme:dark;';
   document.body.style.cssText += ';margin:0;background:#10141c;';
   document.body.replaceChildren(host);
+  const minFontSize = minimumFontSize(pre, shadow);
+  const maxFontSize = Math.max(24, minFontSize + 1);
+  state.fontSize = Math.min(maxFontSize, Math.max(minFontSize, state.fontSize));
   const MAX_HIGHLIGHT_LENGTH = 2 * 1024 * 1024;
   let displayed = original;
   let currentMessage = '';
   let renderId = 0;
   const effective = () => state.mode === 'auto' ? detected : state.mode;
+  function applyViewPreferences() {
+    wrap.input.checked = state.wrap; lines.input.checked = state.lineNumbers;
+    smaller.disabled = state.fontSize <= minFontSize;
+    larger.disabled = state.fontSize >= maxFontSize;
+    pane.style.setProperty('--font-size', state.fontSize + 'px');
+    pre.classList.toggle('wrap', state.wrap);
+    pre.classList.toggle('numbered', state.lineNumbers && !code.classList.contains('unlined'));
+  }
   function render() {
     const id = ++renderId;
     const lang = effective();
@@ -74,12 +86,6 @@ async function start() {
     pretty.wrapper.hidden = lang !== 'json';
     pretty.input.disabled = lang !== 'json';
     pretty.input.checked = state.pretty && lang === 'json';
-    wrap.input.checked = state.wrap; lines.input.checked = state.lineNumbers;
-    smaller.disabled = state.fontSize <= 11; larger.disabled = state.fontSize >= 24;
-    // Apply to the actual text elements rather than relying on an inherited
-    // custom property and Chrome's native PRE/CODE font defaults.
-    pre.style.fontSize = code.style.fontSize = state.fontSize + 'px';
-    pre.classList.toggle('wrap', state.wrap);
     displayed = original;
     currentMessage = '';
     if (lang === 'json' && state.pretty) {
@@ -89,9 +95,9 @@ async function start() {
     }
     const lineCount = displayed.split('\n').length;
     const useLines = lineCount <= 50000;
-    pre.classList.toggle('numbered', state.lineNumbers && useLines);
     pre.style.setProperty('--gutter-width', `${String(lineCount).length + 3}ch`);
     code.classList.toggle('unlined', !useLines);
+    applyViewPreferences();
     if (useLines) renderLines(code, displayed);
     else code.textContent = displayed;
     status.textContent = currentMessage || `${languageLabel(lang)} · ${lineCount.toLocaleString()} lines · Viewing only`;
@@ -124,12 +130,16 @@ async function start() {
     } catch { status.textContent = 'The view was updated, but settings could not be saved.'; }
   }
   async function update(patch) {
+    const previousMode = state.mode;
+    const previousPretty = state.pretty;
     if (patch.mode === 'auto' || validLanguage(patch.mode)) state.mode = patch.mode;
     if (typeof patch.pretty === 'boolean' && effective() === 'json') state.pretty = patch.pretty;
     if (typeof patch.wrap === 'boolean') state.wrap = patch.wrap;
     if (typeof patch.lineNumbers === 'boolean') state.lineNumbers = patch.lineNumbers;
-    if (Number.isFinite(patch.fontSize)) state.fontSize = Math.min(24, Math.max(11, patch.fontSize));
-    render(); await persist(); return snapshot();
+    if (Number.isFinite(patch.fontSize)) state.fontSize = Math.min(maxFontSize, Math.max(minFontSize, patch.fontSize));
+    if (state.mode !== previousMode || state.pretty !== previousPretty) render();
+    else applyViewPreferences();
+    await persist(); return snapshot();
   }
   const snapshot = () => ({ ...state, detected, effective: effective(), filename: fileName(location.href), error: currentMessage });
   language.addEventListener('change', () => update({ mode: language.value }));

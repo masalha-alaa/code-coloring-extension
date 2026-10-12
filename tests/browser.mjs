@@ -6,6 +6,13 @@ import { pathToFileURL } from 'node:url';
 import assert from 'node:assert/strict';
 
 const directory = await mkdtemp(join(tmpdir(), 'code-coloring-tests-'));
+const browserMinimum = Number(process.env.MINIMUM_FONT_SIZE) || 0;
+if (browserMinimum) {
+  await mkdir(join(directory, 'profile', 'Default'), { recursive: true });
+  await writeFile(join(directory, 'profile', 'Default', 'Preferences'), JSON.stringify({
+    webkit: { webprefs: { minimum_font_size: browserMinimum, minimum_logical_font_size: browserMinimum } }
+  }));
+}
 await mkdir('test-results', { recursive: true });
 const context = await chromium.launchPersistentContext(join(directory, 'profile'), {
   channel: 'chromium', headless: true,
@@ -48,14 +55,42 @@ try {
   assert.equal(await readFile(cppPath, 'utf8'), cpp);
 
   // Font controls must change computed code and token sizes, not just settings.
+  await page.locator('.hljs-comment').first().waitFor();
   const fontSize = () => page.locator('.source code').evaluate(node => parseFloat(getComputedStyle(node).fontSize));
+  const textWidth = () => page.locator('.hljs-comment').first().evaluate(node => {
+    const range = document.createRange(); range.selectNodeContents(node);
+    return range.getBoundingClientRect().width;
+  });
   const originalSize = await fontSize();
+  await page.locator('.source code').evaluate(code => {
+    globalThis.fontMutationCount = 0;
+    const observer = new MutationObserver(changes => { globalThis.fontMutationCount += changes.length; });
+    observer.observe(code, { childList: true, subtree: true });
+  });
+  const decrease = page.getByRole('button', { name: 'Smaller text', exact: true });
+  const increase = page.getByRole('button', { name: 'Larger text', exact: true });
+  for (let clicks = 0; clicks < 40 && !(await decrease.isDisabled()); clicks++) {
+    const width = await textWidth();
+    await decrease.click();
+    assert.ok(await textWidth() < width, 'Every A− click must visibly shrink text');
+  }
+  assert.equal(await decrease.isDisabled(), true);
+  assert.equal(await fontSize(), Math.max(11, browserMinimum));
+  for (let clicks = 0; clicks < 3; clicks++) {
+    const width = await textWidth();
+    await increase.click();
+    assert.ok(await textWidth() > width, 'Every A+ click from the minimum must visibly enlarge text');
+  }
+  while (await fontSize() > originalSize) await decrease.click();
+  while (await fontSize() < originalSize) await increase.click();
+  assert.equal(await page.evaluate(() => globalThis.fontMutationCount), 0, 'Font changes must preserve highlighted DOM without flicker');
   await page.getByRole('button', { name: 'Larger text', exact: true }).click();
   assert.equal(await fontSize(), originalSize + 1);
   await page.locator('.hljs-comment').first().waitFor();
   assert.equal(await page.locator('.hljs-comment').first().evaluate(node => parseFloat(getComputedStyle(node).fontSize)), originalSize + 1);
   await page.getByRole('button', { name: 'Smaller text', exact: true }).click();
   assert.equal(await fontSize(), originalSize);
+  if (browserMinimum) await page.screenshot({ path: 'test-results/minimum-font-viewer.png', fullPage: true });
 
   const json = '{"large":900719925474099312345,"items":[1,true,null],"escaped":"\\u0041","nested":{"ok":true}}';
   const jsonPath = await file('sample.json', json);

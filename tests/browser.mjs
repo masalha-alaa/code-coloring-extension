@@ -156,6 +156,39 @@ try {
   assert.equal(await page.locator('.code-line').first().evaluate(row => getComputedStyle(row, '::before').content), '"1"');
   await page.screenshot({ path: 'test-results/wrapped-lines-viewer.png', fullPage: true });
 
+  const goToLine = page.getByRole('dialog', { name: 'Go to line' });
+  const lineField = goToLine.getByRole('textbox', { name: 'Line number' });
+  const sourceLines = Array.from({ length: 100 }, (_, index) =>
+    index === 79 ? '// ' + 'wrapped line '.repeat(20) : `// Line ${index + 1}`);
+  await file('navigation.cpp', sourceLines.join('\n'));
+  await page.locator('.hljs-comment').first().waitFor();
+  await page.getByRole('checkbox', { name: 'Line numbers', exact: true }).uncheck();
+  await page.keyboard.press('Control+g');
+  assert.equal(await goToLine.isVisible(), true);
+  assert.ok(await lineField.evaluate(node => node === node.getRootNode().activeElement));
+  await lineField.fill('101');
+  await lineField.press('Enter');
+  assert.match(await goToLine.getByRole('alert').textContent(), /whole number/);
+  await lineField.fill('80');
+  await lineField.press('Enter');
+  assert.equal(await goToLine.isVisible(), false);
+  assert.equal(await page.locator('.jump-target').getAttribute('data-line'), '80');
+  const target = await page.locator('[data-line="80"]').boundingBox();
+  assert.ok(target.y > 100 && target.y < 800, 'The requested source line must be in view');
+  await page.keyboard.press('Control+g');
+  await lineField.press('Escape');
+  assert.equal(await goToLine.isVisible(), false);
+  await page.getByRole('checkbox', { name: 'Line numbers', exact: true }).check();
+
+  // Navigation also works when the viewer omits line elements for large files.
+  await file('many-lines.txt', 'row\n'.repeat(50000) + 'last line');
+  assert.equal(await page.locator('.code-line').count(), 0);
+  await page.getByRole('button', { name: 'Go to line', exact: true }).click();
+  await lineField.fill('25001');
+  await lineField.press('Enter');
+  assert.ok(await page.evaluate(() => scrollY > 0.48 * document.documentElement.scrollHeight &&
+    scrollY < 0.52 * document.documentElement.scrollHeight));
+
   // Markup in source files must remain text, including when HTML is selected.
   await file('markup.txt', '<script>globalThis.sourceExecuted=true</script><img src=x onerror="alert(1)">');
   await page.getByRole('combobox').selectOption('xml');

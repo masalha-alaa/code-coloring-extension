@@ -24,6 +24,8 @@ For JSON files, **Pretty JSON** formats the view with two-space indentation. The
 
 The toolbar also provides line numbers, line wrapping, font size, and copying the displayed text. Line numbers stay aligned with each source line when it wraps; continuation rows share that source line’s number. Wrap, font size, and line number preferences apply across files. The dark theme is the default.
 
+Press **Ctrl+G** (or select **Go to line** in the toolbar), enter a line number, then press **Enter** to jump. The shortcut uses the displayed line numbers, including when wrapping is on or the gutter is hidden.
+
 Font controls respect Chrome’s minimum rendered font size. Each enabled click changes the visible size; resizing preserves the existing syntax highlighting without flicker.
 
 ## Languages
@@ -61,7 +63,7 @@ npm run package
 
 Edit `src/` for viewer/popup behavior and `extension/` for the manifest, popup HTML/CSS, and icons. `npm run build` regenerates the committed `extension/content.js`, `extension/popup.js`, and third-party notices, then creates `dist/`. Commit the regenerated bundles with source changes so the repository stays ready to load.
 
-`npm run package` creates `artifacts/code-coloring-extension-v1.0.2.zip` with `manifest.json` at the root. GitHub Actions runs core tests and real Chromium extension tests, both with default font preferences and a 16 px minimum, before uploading this package and viewer screenshots.
+`npm run package` creates `artifacts/code-coloring-extension-v1.0.3.zip` with `manifest.json` at the root. GitHub Actions runs core tests and real Chromium extension tests, both with default font preferences and a 16 px minimum, before uploading this package and viewer screenshots.
 
 ## License
 

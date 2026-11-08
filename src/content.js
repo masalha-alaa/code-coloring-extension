@@ -3,6 +3,7 @@ import { LANGUAGES, detectLanguage, fileName, languageLabel, prettyJson, rawSour
 import viewerCss from './viewer.css';
 import { renderLines } from './lines.js';
 import { minimumFontSize } from './font-size.js';
+import { installLineNavigation } from './line-navigation.js';
 
 async function start() {
   if (location.protocol !== 'file:' || document.getElementById('code-coloring-viewer')) return;
@@ -53,7 +54,8 @@ async function start() {
   const larger = element('button', { type: 'button', title: 'Larger text', 'aria-label': 'Larger text' }, 'A+');
   const copy = element('button', { type: 'button', title: 'Copy the displayed code' }, 'Copy');
   const restore = element('button', { type: 'button', title: 'Restore original text and automatic language detection' }, 'Reset');
-  controls.append(smaller, larger, copy, restore);
+  const goToLine = element('button', { type: 'button', title: 'Go to line (Ctrl+G)', 'aria-keyshortcuts': 'Control+G' }, 'Go to line');
+  controls.append(smaller, larger, copy, goToLine, restore);
   toolbar.append(identity, controls);
   const status = element('div', { class: 'status', role: 'status', 'aria-live': 'polite' });
   const pane = element('main', { class: 'pane', 'aria-label': 'Source code' });
@@ -68,9 +70,11 @@ async function start() {
   state.fontSize = Math.min(maxFontSize, Math.max(minFontSize, state.fontSize));
   const MAX_HIGHLIGHT_LENGTH = 2 * 1024 * 1024;
   let displayed = original;
+  let lineCount = 1;
   let currentMessage = '';
   let renderId = 0;
   const effective = () => state.mode === 'auto' ? detected : state.mode;
+  installLineNavigation({ shadow, toolbar, code, button: goToLine, element, getLineCount: () => lineCount });
   function applyViewPreferences() {
     wrap.input.checked = state.wrap; lines.input.checked = state.lineNumbers;
     smaller.disabled = state.fontSize <= minFontSize;
@@ -93,7 +97,7 @@ async function start() {
       else try { displayed = prettyJson(original); }
       catch (error) { currentMessage = `${error instanceof SyntaxError ? 'Invalid JSON' : 'JSON formatting unavailable'}: ${error.message}. Showing the original text.`; }
     }
-    const lineCount = displayed.split('\n').length;
+    lineCount = displayed.split('\n').length;
     const useLines = lineCount <= 50000;
     pre.style.setProperty('--gutter-width', `${String(lineCount).length + 3}ch`);
     code.classList.toggle('unlined', !useLines);

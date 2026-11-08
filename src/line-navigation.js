@@ -18,7 +18,12 @@ export function installLineNavigation({ shadow, toolbar, code, button, element, 
   shadow.append(dialog);
 
   let markedLine;
-  let markerTimer;
+  function clearHighlight() {
+    markedLine?.classList.remove('jump-target');
+    markedLine = null;
+  }
+  window.addEventListener('click', clearHighlight, { capture: true });
+
   function clearWarning() {
     warning.hidden = true;
     field.removeAttribute('aria-invalid');
@@ -58,16 +63,9 @@ export function installLineNavigation({ shadow, toolbar, code, button, element, 
     const row = code.querySelector(`[data-line="${line}"]`);
     const top = row ? row.getBoundingClientRect().top : unlinedTop(code, line);
     window.scrollBy({ top: top - Math.max(toolbar.offsetHeight + 12, window.innerHeight / 4), behavior: 'instant' });
-    clearTimeout(markerTimer);
-    markedLine?.classList.remove('jump-target');
+    clearHighlight();
     markedLine = row;
-    if (row) {
-      row.classList.add('jump-target');
-      markerTimer = setTimeout(() => {
-        row.classList.remove('jump-target');
-        markedLine = null;
-      }, 2000);
-    }
+    row?.classList.add('jump-target');
   });
 }
 

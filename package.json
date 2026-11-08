@@ -1,6 +1,6 @@
 {
   "name": "code-coloring-extension",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "private": true,
   "description": "Offline syntax highlighting for local source files opened in Chrome",
   "type": "module",

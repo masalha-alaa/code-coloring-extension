@@ -18,11 +18,36 @@ export function installLineNavigation({ shadow, toolbar, code, button, element, 
   shadow.append(dialog);
 
   let markedLine;
+  let markedNumber;
   function clearHighlight() {
     markedLine?.classList.remove('jump-target');
     markedLine = null;
+    markedNumber = null;
   }
   window.addEventListener('click', clearHighlight, { capture: true });
+
+  function restoreHighlight() {
+    if (markedNumber == null) return;
+    markedLine = code.querySelector(`[data-line="${markedNumber}"]`);
+    markedLine?.classList.add('jump-target');
+  }
+  function isValidLine(line) {
+    return Number.isSafeInteger(line) && line >= 1 && line <= getLineCount();
+  }
+  function jump(line) {
+    clearHighlight();
+    markedNumber = line;
+    restoreHighlight();
+    const top = markedLine ? markedLine.getBoundingClientRect().top : unlinedTop(code, line);
+    window.scrollBy({ top: top - Math.max(toolbar.offsetHeight + 12, window.innerHeight / 4), behavior: 'instant' });
+  }
+  function jumpFromUrl() {
+    const match = /^#L(\d+)$/.exec(window.location.hash);
+    if (!match) return;
+    const line = Number(match[1]);
+    if (isValidLine(line)) jump(line);
+  }
+  window.addEventListener('hashchange', jumpFromUrl);
 
   function clearWarning() {
     warning.hidden = true;
@@ -50,7 +75,7 @@ export function installLineNavigation({ shadow, toolbar, code, button, element, 
     event.preventDefault();
     const value = field.value.trim();
     const line = Number(value);
-    if (!/^\d+$/.test(value) || !Number.isSafeInteger(line) || line < 1 || line > getLineCount()) {
+    if (!/^\d+$/.test(value) || !isValidLine(line)) {
       warning.replaceChildren(element('span', { 'aria-hidden': 'true' }, '⚠'), ' Enter a whole number in the displayed range.');
       warning.hidden = false;
       field.setAttribute('aria-invalid', 'true');
@@ -60,13 +85,9 @@ export function installLineNavigation({ shadow, toolbar, code, button, element, 
       return;
     }
     dialog.close();
-    const row = code.querySelector(`[data-line="${line}"]`);
-    const top = row ? row.getBoundingClientRect().top : unlinedTop(code, line);
-    window.scrollBy({ top: top - Math.max(toolbar.offsetHeight + 12, window.innerHeight / 4), behavior: 'instant' });
-    clearHighlight();
-    markedLine = row;
-    row?.classList.add('jump-target');
+    jump(line);
   });
+  return { jumpFromUrl, restoreHighlight };
 }
 
 // Large files can omit the row elements. Locate the first glyph of the line

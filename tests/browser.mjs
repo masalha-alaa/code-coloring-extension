@@ -31,10 +31,10 @@ try {
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
-  const file = async (name, source) => {
+  const file = async (name, source, hash = '') => {
     const path = join(directory, name);
     await writeFile(path, source);
-    await page.goto(pathToFileURL(path).href);
+    await page.goto(pathToFileURL(path).href + hash);
     await page.locator('#code-coloring-viewer').waitFor();
     assert.equal(await page.locator('.source code').textContent(), source);
     return path;
@@ -160,9 +160,17 @@ try {
   const lineField = goToLine.getByRole('textbox', { name: 'Line number' });
   const sourceLines = Array.from({ length: 100 }, (_, index) =>
     index === 79 ? '// ' + 'wrapped line '.repeat(20) : `// Line ${index + 1}`);
-  await file('navigation.cpp', sourceLines.join('\n'));
+  const navigationPath = await file('navigation.cpp', sourceLines.join('\n'), '#L80');
   await page.locator('.hljs-comment').first().waitFor();
+  assert.equal(await page.locator('.jump-target').getAttribute('data-line'), '80');
+  const linkedTarget = await page.locator('[data-line="80"]').boundingBox();
+  assert.ok(linkedTarget.y > 100 && linkedTarget.y < 800, 'Opening the link must scroll to its source line');
+  await page.goto(pathToFileURL(navigationPath).href + '#L55');
+  await page.locator('[data-line="55"].jump-target').waitFor();
+  const movedTarget = await page.locator('[data-line="55"]').boundingBox();
+  assert.ok(movedTarget.y > 100 && movedTarget.y < 800, 'Changing the fragment must scroll to its source line');
   await page.getByRole('checkbox', { name: 'Line numbers', exact: true }).uncheck();
+  assert.equal(await page.locator('.jump-target').count(), 0);
   await page.keyboard.press('Control+g');
   assert.equal(await goToLine.isVisible(), true);
   assert.ok(await lineField.evaluate(node => node === node.getRootNode().activeElement));

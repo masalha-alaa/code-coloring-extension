@@ -74,7 +74,7 @@ async function start() {
   let currentMessage = '';
   let renderId = 0;
   const effective = () => state.mode === 'auto' ? detected : state.mode;
-  installLineNavigation({ shadow, toolbar, code, button: goToLine, element, getLineCount: () => lineCount });
+  const navigation = installLineNavigation({ shadow, toolbar, code, button: goToLine, element, getLineCount: () => lineCount });
   function applyViewPreferences() {
     wrap.input.checked = state.wrap; lines.input.checked = state.lineNumbers;
     smaller.disabled = state.fontSize <= minFontSize;
@@ -104,6 +104,7 @@ async function start() {
     applyViewPreferences();
     if (useLines) renderLines(code, displayed);
     else code.textContent = displayed;
+    navigation.restoreHighlight();
     status.textContent = currentMessage || `${languageLabel(lang)} · ${lineCount.toLocaleString()} lines · Viewing only`;
     status.classList.toggle('error', Boolean(currentMessage));
     if (displayed.length > MAX_HIGHLIGHT_LENGTH) {
@@ -119,6 +120,7 @@ async function start() {
         // highlight.js escapes source text; only its generated token markup enters the DOM.
         if (useLines) renderLines(code, displayed, highlighted);
         else code.innerHTML = highlighted;
+        navigation.restoreHighlight();
       } catch {
         code.textContent = displayed;
         status.textContent = 'Highlighting failed. Showing the original text safely.';
@@ -166,5 +168,6 @@ async function start() {
     }
   });
   render();
+  navigation.jumpFromUrl();
 }
 start().catch(error => console.warn('Code Coloring could not initialize:', error));

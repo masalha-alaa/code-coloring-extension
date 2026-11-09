@@ -67,7 +67,7 @@ npm run package
 
 Edit `src/` for viewer/popup behavior and `extension/` for the manifest, popup HTML/CSS, and icons. `npm run build` regenerates the committed `extension/content.js`, `extension/popup.js`, and third-party notices, then creates `dist/`. Commit the regenerated bundles with source changes so the repository stays ready to load.
 
-`npm run package` creates `artifacts/code-coloring-extension-v1.0.6.zip` with `manifest.json` at the root. GitHub Actions runs core tests and real Chromium extension tests, both with default font preferences and a 16 px minimum, before uploading this package and viewer screenshots.
+`npm run package` creates `artifacts/code-coloring-extension-v1.0.7.zip` with `manifest.json` at the root. GitHub Actions runs core tests and real Chromium extension tests, both with default font preferences and a 16 px minimum, before uploading this package and viewer screenshots.
 
 ## License
 

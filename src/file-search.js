@@ -124,21 +124,29 @@ export function installFileSearch({ toolbar, pane, code, button, element }) {
     source = '';
     returnFocus?.focus({ preventScroll: true });
   }
+  function onSearchControl(control, action) {
+    control.addEventListener('click', event => {
+      action();
+      // A pointer click should leave typing and navigation in the search field.
+      // Keyboard activation keeps focus on the control for tab navigation.
+      if (event.detail > 0) input.focus({ preventScroll: true });
+    });
+  }
   button.addEventListener('click', () => bar.hidden ? open() : dismiss());
   close.addEventListener('click', dismiss);
   input.addEventListener('input', () => search(true));
-  caseButton.addEventListener('click', () => {
+  onSearchControl(caseButton, () => {
     caseSensitive = !caseSensitive;
     caseButton.setAttribute('aria-pressed', String(caseSensitive));
     search(true);
   });
-  wordButton.addEventListener('click', () => {
+  onSearchControl(wordButton, () => {
     wholeWord = !wholeWord;
     wordButton.setAttribute('aria-pressed', String(wholeWord));
     search(true);
   });
-  previous.addEventListener('click', () => step(-1));
-  next.addEventListener('click', () => step(1));
+  onSearchControl(previous, () => step(-1));
+  onSearchControl(next, () => step(1));
   bar.addEventListener('submit', event => { event.preventDefault(); step(1); });
   bar.addEventListener('keydown', event => {
     if (event.isComposing) return;

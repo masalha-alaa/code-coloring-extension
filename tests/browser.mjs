@@ -219,6 +219,14 @@ try {
   assert.equal(await activeText(), 'Item');
   await query.press('Shift+Enter');
   assert.equal(await activeText(), 'item');
+  await search.getByRole('button', { name: 'Next result' }).click();
+  assert.equal(await count.textContent(), '2 / 3');
+  await page.keyboard.press('Shift+Enter');
+  assert.equal(await count.textContent(), '1 / 3');
+  await search.getByRole('button', { name: 'Previous result' }).click();
+  assert.equal(await count.textContent(), '3 / 3');
+  await page.keyboard.press('Enter');
+  assert.equal(await count.textContent(), '1 / 3');
   await query.fill('int item');
   assert.equal(await count.textContent(), '1 / 2');
   assert.equal(await activeText(), 'int item', 'Matches can span syntax tokens');

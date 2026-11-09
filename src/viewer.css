@@ -33,6 +33,14 @@ pre { margin:0; font-family:Consolas,'Cascadia Code','SFMono-Regular',Menlo,mono
 .line-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:16px; }
 .line-submit { background:#345782; border-color:#567ca9; color:#f2f7ff; }
 .code-line.jump-target { background:#243a58; outline:1px solid #537caf; }
+.search-bar { flex:0 0 100%; min-width:0; display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
+.search-bar input { flex:1 1 140px; min-width:0; min-height:32px; padding:5px 9px; border:1px solid #40516a; border-radius:6px; background:#10141c; color:inherit; font:inherit; }
+.search-bar button { min-width:32px; padding:5px 7px; }
+.search-bar button[aria-pressed="true"] { background:#345782; border-color:#86b7ff; color:#f2f7ff; }
+.search-word { text-decoration:underline; text-underline-offset:3px; }
+.search-count { color:#a9b7c9; font-variant-numeric:tabular-nums; white-space:nowrap; }
+::highlight(code-coloring-matches) { background:#594823; color:#f6e4b4; }
+::highlight(code-coloring-active-match) { background:#e2bc64; color:#18130a; }
 code { display:block; font:inherit; color:#d3dce5; white-space:normal; }
 .code-line { display:block; position:relative; min-height:1.65em; white-space:pre; }
 .wrap .code-line { white-space:pre-wrap; overflow-wrap:anywhere; }

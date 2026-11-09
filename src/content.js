@@ -4,6 +4,7 @@ import viewerCss from './viewer.css';
 import { renderLines } from './lines.js';
 import { minimumFontSize } from './font-size.js';
 import { installLineNavigation } from './line-navigation.js';
+import { installFileSearch } from './file-search.js';
 
 async function start() {
   if (location.protocol !== 'file:' || document.getElementById('code-coloring-viewer')) return;
@@ -55,7 +56,11 @@ async function start() {
   const copy = element('button', { type: 'button', title: 'Copy the displayed code' }, 'Copy');
   const restore = element('button', { type: 'button', title: 'Restore original text and automatic language detection' }, 'Reset');
   const goToLine = element('button', { type: 'button', title: 'Go to line (Ctrl+G)', 'aria-keyshortcuts': 'Control+G' }, 'Go to line');
-  controls.append(smaller, larger, copy, goToLine, restore);
+  const searchButton = element('button', {
+    type: 'button', title: 'Search (Ctrl+Shift+F)', 'aria-keyshortcuts': 'Control+Shift+F',
+    'aria-controls': 'file-search', 'aria-expanded': 'false'
+  }, 'Search');
+  controls.append(smaller, larger, copy, goToLine, searchButton, restore);
   toolbar.append(identity, controls);
   const status = element('div', { class: 'status', role: 'status', 'aria-live': 'polite' });
   const pane = element('main', { class: 'pane', 'aria-label': 'Source code' });
@@ -75,6 +80,7 @@ async function start() {
   let renderId = 0;
   const effective = () => state.mode === 'auto' ? detected : state.mode;
   const navigation = installLineNavigation({ shadow, toolbar, code, button: goToLine, element, getLineCount: () => lineCount });
+  const fileSearch = installFileSearch({ toolbar, pane, code, button: searchButton, element });
   function applyViewPreferences() {
     wrap.input.checked = state.wrap; lines.input.checked = state.lineNumbers;
     smaller.disabled = state.fontSize <= minFontSize;
@@ -105,6 +111,7 @@ async function start() {
     if (useLines) renderLines(code, displayed);
     else code.textContent = displayed;
     navigation.restoreHighlight();
+    fileSearch.refresh();
     status.textContent = currentMessage || `${languageLabel(lang)} · ${lineCount.toLocaleString()} lines · Viewing only`;
     status.classList.toggle('error', Boolean(currentMessage));
     if (displayed.length > MAX_HIGHLIGHT_LENGTH) {
@@ -125,6 +132,7 @@ async function start() {
         code.textContent = displayed;
         status.textContent = 'Highlighting failed. Showing the original text safely.';
       }
+      fileSearch.refresh();
     }, 0));
   }
   async function persist() {

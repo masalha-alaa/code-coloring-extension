@@ -197,6 +197,38 @@ try {
   assert.ok(await page.evaluate(() => scrollY > 0.48 * document.documentElement.scrollHeight &&
     scrollY < 0.52 * document.documentElement.scrollHeight));
 
+  const searchable = 'int item = 1;\nint Item = item_total + item;\nint itemized = 0;';
+  await file('search.cpp', searchable);
+  await page.locator('.hljs-type').first().waitFor();
+  await page.keyboard.press('Control+Shift+f');
+  const search = page.getByRole('search', { name: 'Find in file' });
+  const query = search.getByRole('searchbox');
+  const count = search.getByRole('status');
+  const activeText = () => page.evaluate(() =>
+    [...CSS.highlights.get('code-coloring-active-match')][0].toString());
+  assert.ok(await query.evaluate(node => node === node.getRootNode().activeElement));
+  await query.fill('item');
+  assert.equal(await count.textContent(), '1 / 5');
+  await search.getByRole('button', { name: 'Case sensitive' }).click();
+  assert.equal(await count.textContent(), '1 / 4');
+  await search.getByRole('button', { name: 'Whole word' }).click();
+  assert.equal(await count.textContent(), '1 / 2');
+  await search.getByRole('button', { name: 'Case sensitive' }).click();
+  assert.equal(await count.textContent(), '1 / 3');
+  await query.press('Enter');
+  assert.equal(await activeText(), 'Item');
+  await query.press('Shift+Enter');
+  assert.equal(await activeText(), 'item');
+  await query.fill('int item');
+  assert.equal(await count.textContent(), '1 / 2');
+  assert.equal(await activeText(), 'int item', 'Matches can span syntax tokens');
+  await query.fill('item.*');
+  assert.equal(await count.textContent(), 'No results');
+  await query.press('Escape');
+  assert.equal(await search.isVisible(), false);
+  assert.equal(await page.evaluate(() => CSS.highlights.has('code-coloring-active-match')), false);
+  assert.equal(await page.locator('.source code').textContent(), searchable);
+
   // Markup in source files must remain text, including when HTML is selected.
   await file('markup.txt', '<script>globalThis.sourceExecuted=true</script><img src=x onerror="alert(1)">');
   await page.getByRole('combobox').selectOption('xml');
